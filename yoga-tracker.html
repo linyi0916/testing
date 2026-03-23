@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宁静瑜伽工作室 · 课时管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sage: #7a9e7e;
+    --sage-light: #a8c5ab;
+    --sage-dark: #4d7352;
+    --clay: #c9956c;
+    --cream: #f8f4ee;
+    --warm-white: #fdfaf5;
+    --charcoal: #2c2c2c;
+    --muted: #8a8a7a;
+    --border: #e2ddd6;
+    --card-bg: #ffffff;
+    --danger: #c0715a;
+    --warning: #d4a843;
+    --success: #5a8f5e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(122,158,126,0.12) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201,149,108,0.1) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  header {
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .header-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 0;
+  }
+  .logo { display: flex; align-items: center; gap: 0.75rem; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--sage);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .logo-text h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.3rem; font-weight: 600;
+    color: var(--charcoal); line-height: 1;
+  }
+  .logo-text span {
+    font-size: 0.7rem; color: var(--muted);
+    letter-spacing: 0.08em; font-weight: 300;
+  }
+  .header-stats { display: flex; gap: 2rem; }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.6rem; font-weight: 600;
+    color: var(--sage-dark); line-height: 1;
+  }
+  .stat-label { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.06em; }
+
+  main {
+    max-width: 1100px; margin: 0 auto;
+    padding: 2rem; position: relative; z-index: 1;
+  }
+
+  .toolbar {
+    display: flex; gap: 1rem; margin-bottom: 2rem;
+    flex-wrap: wrap; align-items: center;
+  }
+  .search-wrap { flex: 1; min-width: 220px; position: relative; }
+  .search-wrap input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card-bg);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.9rem; color: var(--charcoal); outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--sage); }
+  .search-wrap::before {
+    content: '🔍';
+    position: absolute; left: 0.7rem; top: 50%;
+    transform: translateY(-50%); font-size: 0.8rem;
+  }
+  .filter-btn {
+    padding: 0.65rem 1.1rem;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card-bg);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.85rem; color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .filter-btn.active { background: var(--sage); border-color: var(--sage); color: white; }
+  .btn-primary {
+    padding: 0.65rem 1.4rem;
+    background: var(--sage-dark); color: white;
+    border: none; border-radius: 8px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.9rem; font-weight: 500;
+    cursor: pointer; transition: background 0.2s; white-space: nowrap;
+  }
+  .btn-primary:hover { background: var(--sage); }
+
+  .student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .student-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.4rem; position: relative;
+    transition: box-shadow 0.2s, transform 0.2s;
+    animation: fadeUp 0.4s ease both;
+  }
+  .student-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.08); transform: translateY(-2px); }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1rem; font-weight: 600;
+    color: white; flex-shrink: 0;
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.1rem; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-meta { font-size: 0.75rem; color: var(--muted); }
+  .card-menu {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.1rem; color: var(--muted);
+    padding: 0.2rem; border-radius: 4px;
+    transition: color 0.2s; position: relative;
+  }
+  .card-menu:hover { color: var(--charcoal); }
+
+  .classes-section {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.8rem;
+  }
+  .classes-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; }
+  .classes-count {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 2rem; font-weight: 600; line-height: 1;
+  }
+  .classes-count.low { color: var(--danger); }
+  .classes-count.medium { color: var(--warning); }
+  .classes-count.good { color: var(--success); }
+
+  .progress-bar {
+    height: 6px; background: var(--border);
+    border-radius: 99px; overflow: hidden; margin-bottom: 1rem;
+  }
+  .progress-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+  .progress-fill.low { background: var(--danger); }
+  .progress-fill.medium { background: var(--warning); }
+  .progress-fill.good { background: var(--sage); }
+
+  .card-actions { display: flex; gap: 0.5rem; }
+  .btn-sm {
+    flex: 1; padding: 0.45rem 0;
+    border-radius: 7px; border: 1px solid var(--border);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.8rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    background: var(--card-bg); color: var(--charcoal);
+  }
+  .btn-sm.use { border-color: var(--sage); color: var(--sage-dark); }
+  .btn-sm.use:hover { background: var(--sage); color: white; }
+  .btn-sm.add { border-color: var(--clay); color: var(--clay); }
+  .btn-sm.add:hover { background: var(--clay); color: white; }
+  .btn-sm.edit:hover { background: var(--border); }
+
+  .badge {
+    position: absolute; top: 1rem; right: 2.8rem;
+    font-size: 0.65rem; padding: 0.15rem 0.5rem;
+    border-radius: 99px; font-weight: 500; letter-spacing: 0.04em;
+  }
+  .badge.alert { background: #fde8e4; color: var(--danger); }
+  .badge.new { background: #e4f0e5; color: var(--success); }
+
+  .empty {
+    text-align: center; padding: 4rem 2rem;
+    color: var(--muted); grid-column: 1/-1;
+  }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .empty h3 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--charcoal);
+  }
+
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(44,44,44,0.4); backdrop-filter: blur(4px);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--warm-white); border-radius: 16px; padding: 2rem;
+    width: 90%; max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    animation: modalIn 0.25s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal h2 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.4rem; margin-bottom: 1.5rem; color: var(--charcoal);
+  }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label {
+    display: block; font-size: 0.78rem; color: var(--muted);
+    margin-bottom: 0.35rem; letter-spacing: 0.06em;
+  }
+  .form-group input {
+    width: 100%; padding: 0.65rem 0.9rem;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: white; font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.9rem; color: var(--charcoal); outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--sage); }
+  .form-row { display: flex; gap: 0.75rem; }
+  .form-row .form-group { flex: 1; }
+  .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+  .btn-cancel {
+    flex: 1; padding: 0.7rem;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: none; font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.9rem; color: var(--muted); cursor: pointer;
+  }
+  .btn-save {
+    flex: 2; padding: 0.7rem;
+    background: var(--sage-dark); color: white;
+    border: none; border-radius: 8px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-save:hover { background: var(--sage); }
+
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: var(--charcoal); color: white;
+    padding: 0.75rem 1.2rem; border-radius: 10px;
+    font-size: 0.85rem; z-index: 300;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s ease; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .dropdown {
+    display: none; position: absolute; top: 3rem; right: 1rem;
+    background: white; border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    z-index: 50; min-width: 140px; overflow: hidden;
+  }
+  .dropdown.open { display: block; }
+  .dropdown button {
+    display: block; width: 100%; padding: 0.6rem 1rem; text-align: left;
+    background: none; border: none;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.85rem; color: var(--charcoal);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .dropdown button:hover { background: var(--cream); }
+  .dropdown button.del { color: var(--danger); }
+
+  @media (max-width: 600px) {
+    .header-stats { display: none; }
+    main { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-text">
+        <h1>宁静瑜伽工作室</h1>
+        <span>课时管理系统</span>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat">
+        <div class="stat-num" id="total-students">0</div>
+        <div class="stat-label">学员总数</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="low-count">0</div>
+        <div class="stat-label">课时不足</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="total-classes">0</div>
+        <div class="stat-label">剩余课时</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <input type="text" id="search" placeholder="搜索学员姓名…" oninput="renderStudents()">
+    </div>
+    <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
+    <button class="filter-btn" onclick="setFilter('low', this)">课时不足 ⚠️</button>
+    <button class="filter-btn" onclick="setFilter('good', this)">正常 ✓</button>
+    <button class="btn-primary" onclick="openModal()">＋ 添加学员</button>
+  </div>
+  <div class="student-grid" id="grid"></div>
+</main>
+
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h2 id="modal-title">添加新学员</h2>
+    <div class="form-group">
+      <label>学员姓名</label>
+      <input type="text" id="f-name" placeholder="例如：王芳">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>剩余课时</label>
+        <input type="number" id="f-remaining" min="0" max="999" placeholder="10">
+      </div>
+      <div class="form-group">
+        <label>套餐课时</label>
+        <input type="number" id="f-total" min="1" max="999" placeholder="10">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>联系方式（选填）</label>
+      <input type="text" id="f-contact" placeholder="例如：138 0000 0000">
+    </div>
+    <div class="form-group">
+      <label>备注（选填）</label>
+      <input type="text" id="f-notes" placeholder="例如：偏好早晨课程">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="saveStudent()">保存学员</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const COLORS = ['#7a9e7e','#c9956c','#8fa8c8','#b5879a','#9db87a','#c4a35a','#7aabb5'];
+
+let students = JSON.parse(localStorage.getItem('yoga_students') || '[]');
+let editingId = null;
+let currentFilter = 'all';
+
+function save() {
+  localStorage.setItem('yoga_students', JSON.stringify(students));
+}
+
+function getStatus(remaining, total) {
+  const pct = total > 0 ? remaining / total : 0;
+  if (remaining <= 1) return 'low';
+  if (pct <= 0.3) return 'medium';
+  return 'good';
+}
+
+function getInitials(name) {
+  const trimmed = name.trim();
+  if (/[\u4e00-\u9fa5]/.test(trimmed)) {
+    return trimmed.slice(-2);
+  }
+  return trimmed.split(/\s+/).map(w => w[0].toUpperCase()).join('').slice(0,2);
+}
+
+function renderStudents() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const grid = document.getElementById('grid');
+
+  let filtered = students.filter(s => s.name.toLowerCase().includes(q));
+  if (currentFilter === 'low') filtered = filtered.filter(s => getStatus(s.remaining, s.total) !== 'good');
+  if (currentFilter === 'good') filtered = filtered.filter(s => getStatus(s.remaining, s.total) === 'good');
+
+  const low = students.filter(s => getStatus(s.remaining, s.total) !== 'good').length;
+  const totalClasses = students.reduce((a,s) => a + s.remaining, 0);
+  document.getElementById('total-students').textContent = students.length;
+  document.getElementById('low-count').textContent = low;
+  document.getElementById('total-classes').textContent = totalClasses;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty">
+      <div class="empty-icon">🧘</div>
+      <h3>${students.length === 0 ? '暂无学员' : '未找到相关学员'}</h3>
+      <p>${students.length === 0 ? '点击"添加学员"开始管理您的学员。' : '请尝试其他搜索词或筛选条件。'}</p>
+    </div>`;
+    return;
+  }
+
+  filtered.sort((a,b) => {
+    const sa = getStatus(a.remaining, a.total), sb = getStatus(b.remaining, b.total);
+    const order = {low:0, medium:1, good:2};
+    return order[sa] - order[sb];
+  });
+
+  grid.innerHTML = filtered.map((s, i) => {
+    const status = getStatus(s.remaining, s.total);
+    const pct = s.total > 0 ? Math.min(100, (s.remaining / s.total) * 100) : 0;
+    const color = COLORS[students.indexOf(s) % COLORS.length];
+    const badge = s.remaining === 0 ? '<span class="badge alert">课时已用完</span>'
+                : s.remaining === 1 ? '<span class="badge alert">最后一节课！</span>'
+                : '';
+    return `
+    <div class="student-card" style="animation-delay:${i*0.05}s">
+      ${badge}
+      <div class="card-header">
+        <div class="avatar" style="background:${color}">${getInitials(s.name)}</div>
+        <div class="card-info">
+          <div class="card-name">${escHtml(s.name)}</div>
+          <div class="card-meta">${s.contact ? escHtml(s.contact) : (s.notes ? escHtml(s.notes) : '暂无联系方式')}</div>
+        </div>
+        <div style="position:relative">
+          <button class="card-menu" onclick="toggleMenu('menu-${s.id}', event)">⋯</button>
+          <div class="dropdown" id="menu-${s.id}">
+            <button onclick="openEdit('${s.id}')">✏️ 编辑</button>
+            <button onclick="addClasses('${s.id}')">➕ 增加课时</button>
+            <button class="del" onclick="deleteStudent('${s.id}')">🗑 删除</button>
+          </div>
+        </div>
+      </div>
+      <div class="classes-section">
+        <span class="classes-label">剩余课时</span>
+        <span class="classes-count ${status}">${s.remaining}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill ${status}" style="width:${pct}%"></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-sm use" onclick="useClass('${s.id}')">✓ 消耗课时</button>
+        <button class="btn-sm add" onclick="addClasses('${s.id}')">+ 增加</button>
+        <button class="btn-sm edit" onclick="openEdit('${s.id}')">编辑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function useClass(id) {
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  if (s.remaining <= 0) { showToast('⚠️ 该学员已无剩余课时！'); return; }
+  s.remaining--;
+  save(); renderStudents();
+  showToast(`✓ 已消耗 ${s.name} 的1节课时 · 剩余 ${s.remaining} 节`);
+}
+
+function addClasses(id) {
+  const n = parseInt(prompt('请输入要增加的课时数：', '10'));
+  if (!n || n < 1) return;
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  s.remaining += n;
+  s.total += n;
+  save(); renderStudents();
+  showToast(`✨ 已为 ${s.name} 增加 ${n} 节课时`);
+}
+
+function deleteStudent(id) {
+  const s = students.find(x => x.id === id);
+  if (!s || !confirm(`确定要删除学员"${s.name}"吗？`)) return;
+  students = students.filter(x => x.id !== id);
+  save(); renderStudents();
+  showToast(`已删除 ${s.name}`);
+}
+
+function setFilter(val, btn) {
+  currentFilter = val;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStudents();
+}
+
+function openModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = '添加新学员';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-remaining').value = '';
+  document.getElementById('f-total').value = '';
+  document.getElementById('f-contact').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('f-name').focus();
+}
+
+function openEdit(id) {
+  closeAllMenus();
+  const s = students.find(x => x.id === id);
+  if (!s) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = '编辑学员信息';
+  document.getElementById('f-name').value = s.name;
+  document.getElementById('f-remaining').value = s.remaining;
+  document.getElementById('f-total').value = s.total;
+  document.getElementById('f-contact').value = s.contact || '';
+  document.getElementById('f-notes').value = s.notes || '';
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+function saveStudent() {
+  const name = document.getElementById('f-name').value.trim();
+  const remaining = parseInt(document.getElementById('f-remaining').value);
+  const total = parseInt(document.getElementById('f-total').value) || remaining;
+  const contact = document.getElementById('f-contact').value.trim();
+  const notes = document.getElementById('f-notes').value.trim();
+
+  if (!name) { document.getElementById('f-name').focus(); return; }
+  if (isNaN(remaining) || remaining < 0) { document.getElementById('f-remaining').focus(); return; }
+
+  if (editingId) {
+    const s = students.find(x => x.id === editingId);
+    Object.assign(s, { name, remaining, total: total || remaining, contact, notes });
+    showToast(`已更新 ${name} 的信息`);
+  } else {
+    students.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+      name, remaining, total: total || remaining, contact, notes,
+      createdAt: new Date().toISOString()
+    });
+    showToast(`✨ 已添加学员 ${name}`);
+  }
+  save(); closeModal(); renderStudents();
+}
+
+function toggleMenu(id, e) {
+  e.stopPropagation();
+  const menu = document.getElementById(id);
+  const isOpen = menu.classList.contains('open');
+  closeAllMenus();
+  if (!isOpen) menu.classList.add('open');
+}
+function closeAllMenus() {
+  document.querySelectorAll('.dropdown.open').forEach(m => m.classList.remove('open'));
+}
+document.addEventListener('click', closeAllMenus);
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && document.getElementById('overlay').classList.contains('open')) saveStudent();
+});
+
+// 示例数据（首次加载）
+if (students.length === 0) {
+  students = [
+    { id:'s1', name:'王芳', remaining:8, total:10, contact:'138 0001 1111', notes:'哈他瑜伽', createdAt:'' },
+    { id:'s2', name:'李明', remaining:1, total:10, contact:'liming@email.com', notes:'', createdAt:'' },
+    { id:'s3', name:'张丽华', remaining:5, total:10, contact:'139 0002 2222', notes:'偏好早晨课程', createdAt:'' },
+    { id:'s4', name:'陈建国', remaining:0, total:5, contact:'', notes:'暂停中', createdAt:'' },
+    { id:'s5', name:'刘小燕', remaining:10, total:10, contact:'136 0003 3333', notes:'新学员', createdAt:'' },
+    { id:'s6', name:'赵雪梅', remaining:3, total:10, contact:'zhaoxuemei@email.com', notes:'阴瑜伽', createdAt:'' },
+  ];
+  save();
+}
+
+renderStudents();
+</script>
+</body>
+</html>
